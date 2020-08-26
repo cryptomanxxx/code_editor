@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <script type="text/javascript" src="javaS1.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+  <style>
+    body {
+      background-color: grey;
+    }
+    .text {
+      min-height: 25px;
+      width: 950px;
+      background-color: linen;
+      font-size: 16px;
+      display: block;
+      overflow: hidden;
+      word-wrap: break-word;
+      vertical-align: top;
+      border: none;
+    }
+    .code {
+      min-height: 25px;
+      width: 950px;
+      background-color: lightgreen;
+      font-size: 16px;
+      resize: none;
+      display: block;
+      overflow: hidden;
+      word-wrap: break-word;
+      vertical-align: top;
+      border: none;
+    }
+    .output {
+      min-height: 25px;
+      width: 950px;
+      background-color: pink;
+      font-size: 16px;
+      resize: none;
+      display: block;
+      overflow: hidden;
+      word-wrap: break-word;
+      vertical-align: top;
+      border: none;
+    }
+    #table {
+      background-color: lightblue;
+      border: none;
+      height: 400px;
+      overflow: auto;
+      display: inline-block;
+      float: right; 
+      overflow-y: scroll;
+      margin-right: 180px;
+      margin-top: 10px;
+      vertical-align: top;
+    }
+    #button { font-size: 16px; margin-left: 10px; margin-top: 10px; }
+  </style>
+</head>
+ <body   onload="x();">
+
+ <button id="button" onclick="x()">Create New</button>
+ <table id="table""></table>
+
+</body>
+</html>

@@ -30,13 +30,13 @@ var output = document.createElement("div");
 output.setAttribute("id", "output" + cc);
 output.setAttribute("class", "output");
 console.log("output" + cc);
-output.setAttribute("contenteditable", "false");
+output.setAttribute("contenteditable", "true");
 output.innerHTML = "Output-" + cc;
 document.getElementById('table').appendChild(output);
 }
   
 function parse(e1, e2) {
-if (e1.keyCode == 13) { // keycode for enter 
+if (e1.keyCode == 13 && !e1.shiftKey) {
 event.preventDefault();
 inId = e2.id;
 outId = "output" + inId.substring(4);

@@ -1,0 +1,11 @@
+var cars = ["BMW", "Volvo", "Saab", "Ford", "Fiat", "Audi"];
+var x = "";
+var i;
+for (i = 0; i < cars.length; i++) {
+  x += cars[i] + "<br>";
+}
+
+function myFunction(p1, p2) {
+  return p1 * p2;   // The function returns the product of p1 and p2
+}
+myFunction(4,3)

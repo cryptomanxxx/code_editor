@@ -9,3 +9,9 @@ function myFunction(p1, p2) {
   return p1 * p2;   // The function returns the product of p1 and p2
 }
 myFunction(4,3)
+
+var x=[1,2,3,4,5];
+var y = x.map(function(e){
+  return e + 1;
+});
+y;

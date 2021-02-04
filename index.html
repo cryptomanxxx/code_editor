@@ -3,23 +3,21 @@
 <head>
   <meta charset="utf-8" />
   <script type="text/javascript" src="javaS1.js"></script>
+  <script type="text/javascript" src="javaS2.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <style>
     body {
       background-color: grey;
     }
-    .text {
-      min-height: 25px;
-      width: 950px;
-      background-color: linen;
-      font-size: 16px;
-      display: block;
-      overflow: hidden;
-      word-wrap: break-word;
-      vertical-align: top;
-      border: none;
+    .matrix {
+      text-align: center;
+      border-collapse: collapse;
+      border: 1px solid black;
     }
-    .code {
+    .matrix tr,td { border: 1px solid black; }
+    .input {
       min-height: 25px;
       width: 950px;
       background-color: lightgreen;
@@ -46,7 +44,7 @@
     #table {
       background-color: lightblue;
       border: none;
-      height: 600px;
+      height: 400px;
       overflow: auto;
       display: inline-block;
       float: right; 
@@ -55,13 +53,10 @@
       margin-top: 10px;
       vertical-align: top;
     }
-    #button { font-size: 16px; margin-left: 10px; margin-top: 10px; }
   </style>
 </head>
- <body   onload="x();">
-
- <button id="button" onclick="x()">Create New</button>
- <table id="table""></table>
+ <body   onload="input();">
+ <table id="table"></table>
 
 </body>
 </html>

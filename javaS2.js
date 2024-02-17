@@ -1,39 +1,3 @@
-// displays a html table and returns a 1D or 2D array
-function matrix(z) {
-  if (z[0].length == undefined) { // 1D array 
-    var table = document.createElement('table');
-    table.setAttribute("class", "matrix");
-    var tableBody = document.createElement('tbody');
-    var row = document.createElement("tr");
-    tableBody.appendChild(row);
-    for (var i = 0; i < z.length; i++) {
-      var cell = document.createElement("td");
-      var cellText = document.createTextNode(z[i]);
-      cell.appendChild(cellText);
-      row.appendChild(cell);
-    }
-    table.appendChild(tableBody);
-  } else { // 2D array 
-    var table = document.createElement('table');
-    table.setAttribute("class", "matrix");
-    var tableBody = document.createElement('tbody');
-    z.forEach(function (rowData) {
-      var row = document.createElement('tr');
-      rowData.forEach(function (cellData) {
-        var cell = document.createElement('td');
-        cell.appendChild(document.createTextNode(cellData));
-        row.appendChild(cell);
-      });
-      tableBody.appendChild(row);
-    });
-    table.appendChild(tableBody);
-  }
-  document.getElementById(outId).innerHTML = table.outerHTML;
-  toggleOrCheckIfFunctionCall(true);
-  console.log(z);
-  return z;
-}
-
 // multiply two matricies a and b
 function matrixMult(a, b) {
   var data = [];  // maybe change this to array of array 

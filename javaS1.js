@@ -1,82 +1,232 @@
 // counts the number of divs created
 function increment() {
-  increment.n = increment.n || 0;
-  return ++increment.n;
+  increment.n = increment.n || 0;
+  return ++increment.n;
 }
 
 // output has been assigned previously
 function toggleOrCheckIfFunctionCall(newValue) {
-  if (newValue != undefined || newValue != null) {
-    isFunctionCall = newValue || false;
-  }
-  return isFunctionCall;
+  if (newValue != undefined || newValue != null) {
+    isFunctionCall = newValue || false;
+  }
+  return isFunctionCall;
 }
 
 function input() {
-  cc = increment();
-  console.log("cc = " + cc);
-  var input = document.createElement("div");
-  input.setAttribute("id", "input" + cc);
-  input.setAttribute("class", "input");
-  console.log("input" + cc);
-  input.setAttribute("contenteditable", "true");
-  input.setAttribute("onkeypress", "parse(event, this)");
-  document.getElementById('table').appendChild(input);
-  input.focus();
+  cc = increment();
+  console.log("cc = " + cc);
+  var input = document.createElement("div");
+  input.setAttribute("id", "input" + cc);
+  input.setAttribute("class", "input");
+  console.log("input" + cc);
+  input.setAttribute("contenteditable", "true");
+  input.setAttribute("onkeypress", "parse(event, this)");
+  document.getElementById('table').appendChild(input);
+  input.focus();
 }
 
 function output() {
-  var output = document.createElement("div");
-  output.setAttribute("id", "output" + cc);
-  output.setAttribute("class", "output");
-  console.log("output" + cc);
-  output.setAttribute("contenteditable", "false");
-  document.getElementById('table').appendChild(output);
+  var output = document.createElement("div");
+  output.setAttribute("id", "output" + cc);
+  output.setAttribute("class", "output");
+  console.log("output" + cc);
+  output.setAttribute("contenteditable", "true");
+  document.getElementById('table').appendChild(output);
 }
 
 function parse(e1, e2) {
-  if (e1.keyCode == 13 && !e1.shiftKey) {
-    try {
-      event.preventDefault();
-      toggleOrCheckIfFunctionCall(false);
-      inId = e2.id;
-      var w = parseInt(inId.substring(5), 10) + 1
-      outId = "output" + inId.substring(5);
-      var inId2 = "input" + w;
-      if (!document.getElementById(outId)) { output(); input(); } else { document.getElementById(inId2).focus(); };
-      var inz = document.getElementById(inId).innerText;
-      document.getElementById(outId).innerHTML = eval(inz);
+    if (e1.keyCode == 13 && !e1.shiftKey) {
+        try {
+            event.preventDefault();
+            toggleOrCheckIfFunctionCall(false);
+            inId = e2.id;
+            var w = parseInt(inId.substring(5), 10) + 1
+            outId = "output" + inId.substring(5);
+            var inId2 = "input" + w;
+            if (!document.getElementById(outId)) { output(); input(); } else { document.getElementById(inId2).focus(); };
+            var inz = document.getElementById(inId).innerText;
+
+            console.log("Command entered:", inz); // Log the command entered
+
+            // Evaluate the command
+            if (inz.includes('forecastTimeSeries')) {
+                forecastTimeSeries(inputData, outputData, inputForPrediction, function(result, error) {
+                    if (error) {
+                        console.error("An error occurred:", error);
+                        document.getElementById(outId).innerHTML = error;
+                    } else {
+                        console.log("Evaluated result:", result); // Log the evaluated result
+                        document.getElementById(outId).innerHTML = result;
+                    }
+                });
+            } else if (inz.includes('plot')) {
+                var result = eval(inz);
+                console.log("Evaluated result:", result); // Log the evaluated result
+                if (result !== undefined) {
+                    plot(result);
+                } else {
+                    console.error("Error: Plot data is undefined.");
+                }
+            } else {
+                var result = eval(inz);
+                console.log("Evaluated result:", result); // Log the evaluated result
+                if (result instanceof HTMLElement) {
+                    document.getElementById(outId).innerHTML = result.outerHTML;
+                } else {
+                    document.getElementById(outId).innerHTML = result;
+                }
+            }
+        } catch (err) {
+            console.log("Error:", err);
+            console.log("Error in output:", outId);
+            document.getElementById(outId).innerHTML = err;
+        }
     }
-    catch (err) {
-      console.log("err = " + err);
-      console.log("error = " + outId);
-      document.getElementById(outId).innerHTML = err;
+}
+
+function matrix(z){
+if(z===undefined || z===null){
+console.error("Error: Input array is undefined or null.");
+return; // exit the function early
+}
+  var table = document.createElement('table');
+  table.setAttribute("class", "matrix");
+  var tableBody = document.createElement('tbody');
+
+  if (z[0].length == undefined) { // 1D array 
+    var row = document.createElement("tr");
+    tableBody.appendChild(row);
+    for (var i = 0; i < z.length; i++) {
+      var cell = document.createElement("td");
+      var cellText = document.createTextNode(z[i]);
+      cell.appendChild(cellText);
+      row.appendChild(cell);
     }
+  } else { // 2D array 
+    z.forEach(function (rowData) {
+      var row = document.createElement('tr');
+      rowData.forEach(function (cellData) {
+        var cell = document.createElement('td');
+        cell.appendChild(document.createTextNode(cellData));
+        row.appendChild(cell);
+      });
+      tableBody.appendChild(row);
+    });
+  }
+
+  table.appendChild(tableBody);
+  return table;
+}
+
+
+// Define the forecastTimeSeries function
+function forecastTimeSeries(inputData, outputData, inputForPrediction, callback) {
+    // Check if inputData, outputData, and inputForPrediction are provided
+    if (!inputData || !outputData || !inputForPrediction) {
+        console.error("Input data, output data, or input for prediction is missing.");
+        return;
+    }
+
+    // Convert input and output data to tensors
+    const inputTensor = tf.tensor2d(inputData);
+    const outputTensor = tf.tensor2d(outputData);
+    const inputTensorForPrediction = tf.tensor2d([inputForPrediction]);
+
+    // Define the model architecture
+    const model = tf.sequential();
+    model.add(tf.layers.dense({ units: 10, inputShape: [inputData[0].length], activation: 'relu' }));
+    model.add(tf.layers.dense({ units: 1 }));
+
+    // Compile the model
+    model.compile({ optimizer: 'adam', loss: 'meanSquaredError' });
+
+    // Train the model asynchronously
+    model.fit(inputTensor, outputTensor, { epochs: 100 })
+        .then(() => {
+            // Make prediction asynchronously
+            const outputTensorForPrediction = model.predict(inputTensorForPrediction);
+            const output = outputTensorForPrediction.dataSync()[0];
+            console.log('Forecast:', output);
+            callback(output);
+        })
+        .catch((error) => {
+            console.error("An error occurred during training or prediction:", error);
+            callback(undefined, error);
+        });
+}
+
+function plot(data) {
+  if (!data || !Array.isArray(data)) {
+    console.error("Error: Data format is invalid.");
+    return;
+  }
+
+  try {
+    document.getElementById(outId).innerHTML = "";
+
+    // Initialize arrays to store parsed data
+    const xx = [];
+    const yy = [];
+    const colors = ['green', 'blue', 'red', 'orange', 'purple']; // Define an array of colors
+    var plotData = []; // Define plotData array
+
+    // Parse each data object
+    data.forEach((series, index) => {
+      // Extract dates and closing prices from the series
+      const dates = series.dates;
+      const closingPrices = series.closingPrices;
+
+      // Populate xx with index and yy with closing prices array
+      yy.push(closingPrices);
+
+      // Generate dummy index for xx
+      xx.push(Array(closingPrices.length).fill().map((_, i) => i));
+
+      // Assign color to the series
+      const color = colors[index % colors.length]; // Cycle through colors array
+      const seriesData = {
+        x: xx[index],
+        y: yy[index],
+        type: 'scatter',
+        line: { color: color, width: 2 },
+        name: 'Series ' + (index + 1) // Optional: Assign a name for each series
+      };
+      plotData.push(seriesData);
+    });
+
+    var layout = {
+      width: 950,
+      height: 290,
+      paper_bgcolor: 'lightblue',
+      plot_bgcolor: 'lightblue',
+      margin: { l: 60, b: 90, r: 20, t: 20 },
+      xaxis: {
+        title: 'x-axis',
+        titlefont: { family: 'Courier New, monospace', size: 14, color: 'black' },
+        tickmode: "auto",
+        tickangle: 90,
+        tickfont: { size: 10, color: 'black' },
+        showgrid: true,
+        gridcolor: 'black',
+        linecolor: 'black'
+      },
+      yaxis: {
+        title: 'y-axis',
+        titlefont: { family: 'Courier New, monospace', size: 14, color: 'black' },
+        tickfont: { size: 10, color: 'black' },
+        showgrid: true,
+        gridcolor: 'black',
+        linecolor: 'black'
+      }
+    };
+
+    Plotly.newPlot(outId, plotData, layout, { displayModeBar: false, staticPlot: true });
+  } catch (error) {
+    console.error("Error occurred while plotting:", error);
   }
 }
 
-// ticker symbols for the 100 crypto currencies with the largest market cap
-function ticker() {
-  var ApiKey = "ddd85b386e1a7c889e468a4933f75f22f52b0755b747bdb637ab39c88a3bc19b";
-  var urlA = "https://min-api.cryptocompare.com/data/top/mktcapfull?limit=100&tsym=USD&api_key=" + ApiKey;
 
-  var result = null;
-
-  $.ajax({
-    url: urlA,
-    async: false,   // makes a synchronous data call to cryptocompare's api
-    dataType: "json",
-    success: function (data) { result = data; }
-  });
-
-  var y = result.Data;
-  var A = [];
-  for (var i = 0; i < y.length; i++) {
-    A.push([y[i].CoinInfo.Name]);
-  }
-  // console.log(A);
-  return A;
-}
 
 // converts a unix timestamp to a date string  
 function time(w) {
@@ -84,7 +234,6 @@ function time(w) {
   var MyDateString = MyDate.getFullYear() + '-' + ('0' + (MyDate.getMonth() + 1)).slice(-2) + '-' + ('0' + MyDate.getDate()).slice(-2);
   return JSON.stringify(MyDateString);
 }
-
 
 // historial crypto currency price data for a specified ticker symbol string
 function crypto1(t) {
@@ -95,9 +244,14 @@ function crypto1(t) {
 
   $.ajax({
     url: urlA,
-    async: false,   // makes a synchrously data call to cryptocompare
+    async: false, // Making the call synchronous
     dataType: "json",
-    success: function (data) { result = data; }
+    success: function(data) {
+      result = data;
+    },
+    error: function(xhr, status, error) {
+      console.error("Error fetching crypto data:", error);
+    }
   });
 
   var y = result.Data;
@@ -108,231 +262,161 @@ function crypto1(t) {
     D1.push(time(y[i].time));
     D2.push(y[i].close);
   }
-  // console.log(D2);
-  return [D1, D2];
+  return [D1,D2];
 }
 
-
-
-// fucked up
-// crypto price data for multiple crypto currencies
-function crypto2() {
-  var x = ticker().slice(0, 50);
-  console.log("x = " + x);
-  console.log("ticker length = " + x.length);
-
+// historial crypto currency price data for specified ticker symbols
+function crypto2(...tickers) {
   var ApiKey = "ddd85b386e1a7c889e468a4933f75f22f52b0755b747bdb637ab39c88a3bc19b";
-  var urlA = "https://min-api.cryptocompare.com/data/pricemulti?fsyms=" + x + "&tsyms=USD&limit=300&api_key=" + ApiKey;
+  var baseUrl = "https://min-api.cryptocompare.com/data/histoday?fsym=";
+  var dataArray = [];
 
-  // var urlA = "https://min-api.cryptocompare.com/data/pricemulti?fsyms=" + x + "&tsyms=USD&limit=300";
-  // var result = null;
-
-  $.ajax({
-    url: urlA,
-    async: false,   // makes a synchrously data call to cryptocompare
-    dataType: "json",
-    success: function (data) { result = data; }
+  tickers.forEach(function(ticker, index) {
+    var url = baseUrl + ticker + "&tsym=USD&limit=1000&api_key=" + ApiKey;
+    $.ajax({
+      url: url,
+      async: false, // Making the call synchronous
+      dataType: "json",
+      success: function(data) {
+        var dates = [];
+        var closingPrices = [];
+        data.Data.forEach(function(item) {
+          dates.push(time(item.time));
+          closingPrices.push(item.close);
+        });
+        var cryptoData = { ticker: ticker, dates: dates, closingPrices: closingPrices };
+        dataArray.push(cryptoData);
+      },
+      error: function(xhr, status, error) {
+        console.error("Error fetching crypto data for " + ticker + ":", error);
+      }
+    });
   });
 
-  var y = result;
-  console.log("y = " + JSON.stringify(y));
-  console.log("y.BTC.USD = " + y.BTC.USD);
-  console.log("rght = " + x[0]);
+  // Format the dataArray into a string
+  var formattedData = dataArray.map(function(item) {
+    return "Ticker: " + item.ticker + ", Dates: " + item.dates.join(", ") + ", Closing Prices: " + item.closingPrices.join(", ");
+  }).join("\n");
 
-  var D1 = [];
-  for (var i = 0; i < 40; i++) {
-    D1.push(y.x[i].USD);
-  }
-  console.log("data = " + D1);
-  return D1;
+  // Return the formatted data string
+  return formattedData;
+}
+
+// function to get closing prices for multiple crypto currency tickers
+function crypto3(...tickers) {
+  var ApiKey = "ddd85b386e1a7c889e468a4933f75f22f52b0755b747bdb637ab39c88a3bc19b";
+  var baseUrl = "https://min-api.cryptocompare.com/data/histoday?fsym=";
+  var dataArray = [];
+
+  tickers.forEach(function(ticker, index) {
+    var url = baseUrl + ticker + "&tsym=USD&limit=1000&api_key=" + ApiKey;
+    $.ajax({
+      url: url,
+      async: false, // Making the call synchronous
+      dataType: "json",
+      success: function(data) {
+        var dates = [];
+        var closingPrices = [];
+        data.Data.forEach(function(item) {
+          dates.push(time(item.time));
+          closingPrices.push(item.close);
+        });
+        var cryptoData = { ticker: ticker, dates: dates, closingPrices: closingPrices };
+        dataArray.push(cryptoData);
+      },
+      error: function(xhr, status, error) {
+        console.error("Error fetching crypto data for " + ticker + ":", error);
+      }
+    });
+  });
+    
+  console.log("DataArray = ", dataArray);
+  // Return the dataArray containing the formatted data
+  return dataArray;
 }
 
 
-// crypto price data for multiple crypto currencies
-function crypto3() {
-  var x = ticker().slice(0, 60);
-  console.log("x = " + x);
-  console.log("ticker length = " + x.length);
-
+function crypto4(tickers) {
   var ApiKey = "ddd85b386e1a7c889e468a4933f75f22f52b0755b747bdb637ab39c88a3bc19b";
-  var urlA = "https://min-api.cryptocompare.com/data/pricemulti?fsyms=" + x + "&tsyms=USD&api_key=" + ApiKey;
+  var baseUrl = "https://min-api.cryptocompare.com/data/histoday?fsym=";
+  var dataArray = [];
+
+  var tickersArray = tickers.split(","); // Split the comma-separated string into an array of ticker symbols
+
+  tickersArray.forEach(function(ticker, index) {
+    var url = baseUrl + ticker + "&tsym=USD&limit=1000&api_key=" + ApiKey;
+    $.ajax({
+      url: url,
+      async: false, // Making the call synchronous
+      dataType: "json",
+      success: function(data) {
+        var dates = [];
+        var closingPrices = [];
+        data.Data.forEach(function(item) {
+          dates.push(time(item.time));
+          closingPrices.push(item.close);
+        });
+        var cryptoData = { ticker: ticker, dates: dates, closingPrices: closingPrices };
+        dataArray.push(cryptoData);
+      },
+      error: function(xhr, status, error) {
+        console.error("Error fetching crypto data for " + ticker + ":", error);
+      }
+    });
+  });
+
+  return dataArray;
+}
+
+
+function ticker() {
+  var ApiKey = "ddd85b386e1a7c889e468a4933f75f22f52b0755b747bdb637ab39c88a3bc19b";
+  var urlA = "https://min-api.cryptocompare.com/data/top/mktcapfull?limit=100&tsym=USD&api_key=" + ApiKey;
   var result = null;
 
   $.ajax({
     url: urlA,
-    async: false, // makes a synchrously data call to cryptocompare
+    async: false,
     dataType: "json",
-    success: function (data) {
-      result = data;
-    }
+    success: function (data) { result = data; }
   });
 
-  console.log("result = " + JSON.stringify(result));
-
-  const D1 = Object.keys(result).map(key => result[key]?.["USD"])
-  return matrix([x, D1]);
-}
-
-
-// plots a given data array z 
-function plot1(z) {
-  document.getElementById(outId).innerHTML = "";
-  console.log("z[0].length = " + z[0].length);
-
-  if (z[0].length == undefined) { // if only one row with price
-    var yy = z;
-    var xx = [];
-    for (var i = 0; i <= yy.length; i++) { xx[i] = JSON.stringify(i); }
-  } else {
-    var xx = z[0]; // first row date
-    var yy = z[1]; // second row price      
+  var y = result.Data;
+  var A = [];
+  for (var i = 0; i < y.length; i++) {
+    A.push(y[i].CoinInfo.Name);
   }
-  var data = [{
-    x: xx,
-    y: yy,
-    type: 'scatter',
-    line: { color: 'green', width: 2 }
-  }];
-  var layout =
-  {
-    width: 950,
-    height: 290,
-    paper_bgcolor: 'lightblue',
-    plot_bgcolor: 'lightblue',
-    margin: { l: 60, b: 90, r: 20, t: 20 },
-    xaxis: { title: 'x-axis', titlefont: { family: 'Courier New, monospace', size: 14, color: 'black' } },
-    xaxis: { tickmode: "auto", tickangle: 45 },
-    yaxis: { title: 'y-axis', titlefont: { family: 'Courier New, monospace', size: 14, color: 'black' } },
-    xaxis: { tickfont: { size: 10, color: 'black' }, showgrid: true, gridcolor: 'black', linecolor: 'black' },
-    yaxis: { tickfont: { size: 10, color: 'black' }, showgrid: true, gridcolor: 'black', linecolor: 'black' }
-  };
-  toggleOrCheckIfFunctionCall(true);
-  Plotly.newPlot(outId, data, layout, { displayModeBar: false, staticPlot: true });
+  return A.join(","); // Join the ticker symbols into a single string
 }
 
-// plots a given data array z 
-function plot2(z) {
-  document.getElementById(outId).innerHTML = "";
-  var yy = z;
-  var xx = [];
-  for (var i = 0; i <= yy.length; i++) {
-    xx[i] = JSON.stringify(i);
-  }
-  var data = [{
-    x: xx,
-    y: yy,
-    type: 'scatter',
-    line: { color: 'green', width: 2 }
-  }];
-  var layout =
-  {
-    width: 950,
-    height: 300,
-    paper_bgcolor: 'lightblue',
-    plot_bgcolor: 'lightblue',
-    margin: { l: 60, b: 60, r: 20, t: 20 },
-    xaxis: { title: 'x-axis', titlefont: { family: 'Courier New, monospace', size: 18, color: 'black' } },
-    yaxis: { title: 'y-axis', titlefont: { family: 'Courier New, monospace', size: 18, color: 'black' } },
-    xaxis: { tickfont: { size: 12, color: 'black' }, showgrid: true, gridcolor: 'black', linecolor: 'black' },
-    yaxis: { tickfont: { size: 12, color: 'black' }, showgrid: true, gridcolor: 'black', linecolor: 'black' }
-  };
-  toggleOrCheckIfFunctionCall(true);
-  Plotly.newPlot(outId, data, layout, { displayModeBar: false, staticPlot: true });
-}
 
-// first difference of an array (r = return )
-function r(a) {
-  var r = [];
-  for (i = 1; i < a.length; i++) {
-    r.push(a[i] - a[i - 1]);
-  }
-  return r;
-}
+function formatCryptoData(data) {
+    var formattedData = [];
 
-// percentage difference of an array ( rr = % return )
-function rr(a) {
-  var r = [];
-  for (i = 1; i < a.length; i++) {
-    r.push((a[i] - a[i - 1]) / a[i - 1]);
-  }
-  return r;
-}
+    // Add headers
+    formattedData.push(["Dates"]);
 
-// an array with data from a to b
-function seq(a, b) {
-  var data = Array.from(Array(1), () => new Array(b - a + 1));
-  // the benefit from creating array this way is a.length = number of rows and a[0].length = number of columns  
-  for (var i = 0; i < data[0].length; i++) {
-    data[0][i] = a + i;
-  }
-  return matrix(data);
-}
+    // Extract unique tickers
+    var tickers = data.map(crypto => crypto.ticker);
+    var uniqueTickers = [...new Set(tickers)];
 
-// a random numbers between -1 and 1 with dimensions n1 and n2 and expected value e
-function rand(n1, n2, e) {
-  if (e == undefined) { e = 0; }
-  if (n1 == undefined && n2 == undefined) { return Math.random() * 2 - 1; }
-  var data = Array.from(Array(n1), () => new Array(n2));
-  // benefit from creating array this way is a.length = number of rows and a[0].length = number of columns 
-  for (var i = 0; i < n1; i++) {
-    for (var j = 0; j < n2; j++) {
-      data[i][j] = e + Math.random() * 2 - 1;
+    // Add closing prices for each ticker
+    uniqueTickers.forEach(ticker => {
+        formattedData[0].push(ticker + " Closing Price");
+    });
+
+    // Combine closing prices for all tickers
+    for (var i = 0; i < data[0].dates.length; i++) {
+        var rowData = [data[0].dates[i]];
+
+        uniqueTickers.forEach(ticker => {
+            var tickerData = data.find(crypto => crypto.ticker === ticker);
+            rowData.push(tickerData ? tickerData.closingPrices[i] : null);
+        });
+
+        formattedData.push(rowData);
     }
-  }
-  return round(data, 10);
+
+    return formattedData;
 }
 
-// rounds a number, a 1D or a 2D array array x to z decimal points
-function round(x, z) {
-  if (z == undefined) { z = 2; }
-  console.log("type of = " + typeof (x));
-  if (typeof (x) == "number") { x = x.toFixed(z) }
-  else if (x[0].length == undefined) { // 1D array
-    for (var i = 0; i < x.length; i++) {
-      x[i] = parseFloat(x[i].toFixed(z));
-    }
-  } else
-    for (var i = 0; i < x.length; i++) { // 2D array 
-      for (var j = 0; j < x[0].length; j++) {
-        x[i][j] = parseFloat(x[i][j].toFixed(z));
-      }
-    }
-  return x;
-}
-
-// creates an array from the functions's parameters 
-function array() {
-  n = arguments.length;
-  console.log("n = " + n);
-  var data = Array.from(Array(1), () => new Array(n));
-  // the benefit from creating array this way is a.length = number of rows and a[0].length = number of columns  
-  for (var i = 0; i < n; i++) { data[0][i] = arguments[i]; }
-  return matrix(data);
-}
-
-// an array with a random walk with expected value ex 
-function rw(n, ex) {
-  if (ex == undefined) { ex = 0; }
-  var x = [];
-  x[0] = 100;
-  for (var i = 1; i < n; i++) {
-    x[i] = ex + x[i - 1] + Math.random() * 2 - 1;
-  }
-  var xx = round(x, 2);
-  console.log(xx);
-  return xx;
-}
-
-// counts the number of elements b in a given array a
-function count(a, b) {
-  if (b == undefined) {
-    var count = a.length;
-  } else {
-    var count = 0;
-    for (var i = 0; i < a.length; ++i) {
-      if (a[i] == b)
-        count++;
-    }
-  }
-  return count;
-}
